@@ -9,13 +9,17 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private UIGame UIGame;
     [SerializeField] private AudioClip dead;
     [SerializeField] private AudioClip coinPickedUp;
+    [SerializeField] private AudioClip goldPowerUp;
 
     [NonSerialized] public bool potionPickedUp = false;
+    [NonSerialized] public bool goldPowerUpPickedUp = false;
+
+    private static readonly int State = Animator.StringToHash("State");
+    private bool grounded = false;
+
     private Rigidbody2D rb;
     private Animator animator;
-    private static readonly int State = Animator.StringToHash("State");
     private AudioSource audioSource;
-    private bool grounded = false;
 
     enum PlayerState
     {
@@ -107,9 +111,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (collision.gameObject.layer == 8 && potionPickedUp)
         {
-            audioSource.Play();
             collision.gameObject.SetActive(false);
-            potionPickedUp = false;
         }
 
     }
@@ -118,13 +120,20 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.layer == 9)
         {
+            audioSource.Play();
             StartCoroutine(PotionPickedUp());
         }
         if (collision.gameObject.layer == 11)
         {
-            CoinPickedUp();
+            UIGame.CoinPickedUp();
             audioSource.PlayOneShot(coinPickedUp);
             collision.gameObject.SetActive(false);
+        }
+        if (collision.gameObject.layer == 12)
+        {
+            audioSource.PlayOneShot(goldPowerUp);
+            collision.gameObject.SetActive(false);
+            StartCoroutine(GoldPowerUpPickedUp());
         }
     }
 
@@ -135,10 +144,12 @@ public class PlayerMovement : MonoBehaviour
         potionPickedUp = false;
 
     }
-
-    private void CoinPickedUp()
+    private IEnumerator GoldPowerUpPickedUp()
     {
-        UIGame.CoinPickedUp();
+        goldPowerUpPickedUp = true;
+        yield return new WaitForSeconds(10);
+        goldPowerUpPickedUp = false;
+
     }
 
     private void OnCollisionExit2D(Collision2D collision)

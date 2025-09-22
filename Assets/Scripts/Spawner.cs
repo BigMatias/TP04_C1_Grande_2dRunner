@@ -13,6 +13,7 @@ public class Spawner : MonoBehaviour
     [SerializeField] GameObject platform;
     [SerializeField] GameObject potion;
     [SerializeField] GameObject coin;
+    [SerializeField] GameObject goldPowerUp;
 
     private GameObject[] bats;
     private GameObject[] saws;
@@ -23,6 +24,7 @@ public class Spawner : MonoBehaviour
     private Rigidbody2D platformRb;
     private Rigidbody2D potionRb;
     private Rigidbody2D coinRb;
+    private Rigidbody2D goldPowerUpRb;
 
     private float xLeftLimit = -11f;
     private float obstacleMinRandomSpawn = 2f;
@@ -45,6 +47,7 @@ public class Spawner : MonoBehaviour
         platformRb = platform.GetComponent<Rigidbody2D>();
         potionRb = potion.GetComponent<Rigidbody2D>();
         coinRb = coin.GetComponent<Rigidbody2D>();
+        goldPowerUpRb = goldPowerUp.GetComponent<Rigidbody2D>();
 
         saw.gameObject.SetActive(false);
         spike.gameObject.SetActive(false);
@@ -52,6 +55,7 @@ public class Spawner : MonoBehaviour
         platform.gameObject.SetActive(false);
         potion.gameObject.SetActive(false);
         coin.gameObject.SetActive(false);
+        goldPowerUp.gameObject.SetActive(false);
 
         bats = new GameObject[5];
         saws = new GameObject[5];
@@ -160,6 +164,18 @@ public class Spawner : MonoBehaviour
             if (coin.transform.position.x <= xLeftLimit)
             {
                 coin.gameObject.SetActive(false);
+            }
+        }
+
+        if (goldPowerUp.activeSelf)
+        {
+            Vector2 newPosition = goldPowerUpRb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
+
+            goldPowerUpRb.MovePosition(newPosition);
+
+            if (goldPowerUp.transform.position.x <= xLeftLimit)
+            {
+                goldPowerUp.gameObject.SetActive(false);
             }
         }
     }
@@ -290,6 +306,25 @@ public class Spawner : MonoBehaviour
 
             platform.transform.position = new Vector3(spawnLocPlatX, spawnLocPlatY);
             potion.transform.position = new Vector3(spawnLocPotX, spawnLocPotY);
+        }
+    }
+    public void CreateGoldPowerUpPub()
+    {
+        StartCoroutine(CreateGoldPowerUp());
+    }
+
+    private IEnumerator CreateGoldPowerUp()
+    {
+        while (true) 
+        {
+            float randomTime = Random.Range(10f, 25f);
+            yield return new WaitForSeconds(randomTime);
+            float spawnLocX = 13.22f;
+            float spawnLocY = Random.Range(-3.17f, 0.59f);
+
+            goldPowerUp.gameObject.SetActive(true);
+
+            goldPowerUp.transform.position = new Vector3(spawnLocX, spawnLocY);
         }
     }
 

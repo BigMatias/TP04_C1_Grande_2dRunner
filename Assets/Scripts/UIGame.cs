@@ -11,9 +11,11 @@ public class UIGame : MonoBehaviour
     [SerializeField] TextMeshProUGUI startText;
     [SerializeField] TextMeshProUGUI timeTxt;
     [SerializeField] TextMeshProUGUI potionTimer;
+    [SerializeField] TextMeshProUGUI goldPowerUpTimer;
     [SerializeField] TextMeshProUGUI coinCounter;
-    [SerializeField] GameObject uiPotion;
-    [SerializeField] Spawner Obstacles;
+    [SerializeField] Image uiPotion;
+    [SerializeField] Image uiGoldPowerUp;
+    [SerializeField] Spawner Spawner;
     [SerializeField] PlayerData PlayerData;
     [SerializeField] ParallaxData ParallaxData;
     [SerializeField] PlayerMovement PlayerMovement;
@@ -29,6 +31,7 @@ public class UIGame : MonoBehaviour
     private bool jumpPressed = false;
     private float timeAux;
     private float potionTimerVar = 10f;
+    private float goldPowerUpTimerVar = 10f;
     private int coinCounterAux;
 
     private void Awake()
@@ -42,7 +45,9 @@ public class UIGame : MonoBehaviour
         coinCounterAux = 0;
         coinCounter.text = 0.ToString();
         uiPotion.gameObject.SetActive(false);
+        uiGoldPowerUp.gameObject.SetActive(false);
         potionTimer.gameObject.SetActive(false);
+        goldPowerUpTimer.gameObject.SetActive(false);
         startText.gameObject.SetActive(true);
         GameOverPanel.SetActive(false);
     }
@@ -57,6 +62,7 @@ public class UIGame : MonoBehaviour
     private void Update()
     {
         PotionPickedUp();
+        GoldPowerUpPickedUp();
 
         if (Input.GetKeyDown(PlayerData.Jump) && jumpPressed == false)
         {
@@ -65,8 +71,9 @@ public class UIGame : MonoBehaviour
             gameStarted = true;
 
             StartCoroutine(IncreaseBgSpeed());
-            Obstacles.IncreaseSpeedOverTime();
-            Obstacles.CreatePlatformAndPotionPub();
+            Spawner.IncreaseSpeedOverTime();
+            Spawner.CreatePlatformAndPotionPub();
+            Spawner.CreateGoldPowerUpPub();
         }
 
         if (gameStarted)
@@ -108,8 +115,32 @@ public class UIGame : MonoBehaviour
 
     public void CoinPickedUp()
     {
-        coinCounterAux += 1;
+        if (PlayerMovement.goldPowerUpPickedUp)
+        {
+            coinCounterAux += 3;
+        }
+        else
+        {
+            coinCounterAux += 1;
+        }
         coinCounter.text = coinCounterAux.ToString();
+    }
+
+    private void GoldPowerUpPickedUp()
+    {
+        if (PlayerMovement.goldPowerUpPickedUp)
+        {
+            goldPowerUpTimerVar -= Time.deltaTime;
+            goldPowerUpTimer.gameObject.SetActive(true);
+            goldPowerUpTimer.text = goldPowerUpTimerVar.ToString("0");
+            uiGoldPowerUp.gameObject.SetActive(true);
+        }
+        else
+        {
+            goldPowerUpTimerVar = 10f;
+            goldPowerUpTimer.gameObject.SetActive(false);
+            uiGoldPowerUp.gameObject.SetActive(false);
+        }
     }
 
     public void GameOver()
@@ -127,4 +158,5 @@ public class UIGame : MonoBehaviour
         SceneManager.LoadScene("MainMenu");
 
     }
+
 }
