@@ -75,7 +75,7 @@ public class GameManager : MonoBehaviour
         {
             BG4.gameObject.SetActive(true);
         }
-
+     
     }
 
     void Update()

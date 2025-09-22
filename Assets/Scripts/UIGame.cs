@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,10 +10,12 @@ public class UIGame : MonoBehaviour
     [Header("References")]
     [SerializeField] TextMeshProUGUI startText;
     [SerializeField] TextMeshProUGUI timeTxt;
+    [SerializeField] TextMeshProUGUI potionTimer;
+    [SerializeField] TextMeshProUGUI coinCounter;
     [SerializeField] GameObject uiPotion;
-    [SerializeField] Obstacles Obstacles;
-    [SerializeField] Floor Floor;
+    [SerializeField] Spawner Obstacles;
     [SerializeField] PlayerData PlayerData;
+    [SerializeField] ParallaxData ParallaxData;
     [SerializeField] PlayerMovement PlayerMovement;
 
     [Header("GameOver")]
@@ -21,15 +24,27 @@ public class UIGame : MonoBehaviour
     [SerializeField] Button noRestartBtn;
 
     [NonSerialized] public bool gameStarted = false;
+    [NonSerialized] public int gameTime;
 
     private bool jumpPressed = false;
     private float timeAux;
-    public int gameTime;
+    private float potionTimerVar = 10f;
+    private int coinCounterAux;
 
     private void Awake()
     {
-        restartBtn.onClick.AddListener(RestartClicked);    
-        noRestartBtn.onClick.AddListener(MainMenuClicked);    
+        restartBtn.onClick.AddListener(RestartClicked);
+        noRestartBtn.onClick.AddListener(MainMenuClicked);
+    }
+
+    void Start()
+    {
+        coinCounterAux = 0;
+        coinCounter.text = 0.ToString();
+        uiPotion.gameObject.SetActive(false);
+        potionTimer.gameObject.SetActive(false);
+        startText.gameObject.SetActive(true);
+        GameOverPanel.SetActive(false);
     }
 
     private void OnDestroy()
@@ -38,13 +53,6 @@ public class UIGame : MonoBehaviour
         noRestartBtn.onClick.AddListener(MainMenuClicked);
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        uiPotion.gameObject.SetActive(false);
-        startText.gameObject.SetActive(true);
-        GameOverPanel.SetActive(false);
-    }
 
     private void Update()
     {
@@ -55,15 +63,29 @@ public class UIGame : MonoBehaviour
             startText.gameObject.SetActive(false);
             jumpPressed = true;
             gameStarted = true;
-            Floor.IncreaseSpeedOverTime();
+
+            StartCoroutine(IncreaseBgSpeed());
             Obstacles.IncreaseSpeedOverTime();
+            Obstacles.CreatePlatformAndPotionPub();
         }
 
         if (gameStarted)
         {
             timeAux += 1 * Time.deltaTime;
             gameTime = Mathf.RoundToInt(timeAux);
-            timeTxt.text = gameTime.ToString();            
+            timeTxt.text = gameTime.ToString();
+        }
+    }
+
+    private IEnumerator IncreaseBgSpeed()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(10);
+            ParallaxData.currentFloorSpeed += 0.002f;
+            ParallaxData.currentL1Speed += 0.002f;
+            ParallaxData.currentL3Speed += 0.002f;
+
         }
     }
 
@@ -71,12 +93,23 @@ public class UIGame : MonoBehaviour
     {
         if (PlayerMovement.potionPickedUp)
         {
-          uiPotion.gameObject.SetActive(true);
+            potionTimerVar -= Time.deltaTime;
+            potionTimer.gameObject.SetActive(true);
+            potionTimer.text = potionTimerVar.ToString("0");
+            uiPotion.gameObject.SetActive(true);
         }
         else
         {
+            potionTimerVar = 10f;
+            potionTimer.gameObject.SetActive(false);
             uiPotion.gameObject.SetActive(false);
         }
+    }
+
+    public void CoinPickedUp()
+    {
+        coinCounterAux += 1;
+        coinCounter.text = coinCounterAux.ToString();
     }
 
     public void GameOver()

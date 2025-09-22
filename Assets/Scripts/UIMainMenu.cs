@@ -1,9 +1,6 @@
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-
-#if UNITY_EDITOR
 using UnityEngine;
-#endif
 
 public class UIMainMenu : MonoBehaviour
 {

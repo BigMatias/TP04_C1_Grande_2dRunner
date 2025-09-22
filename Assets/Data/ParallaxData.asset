@@ -9,7 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9550984ca5285d4ba7ba42c3643b5fb, type: 3}
-  m_Name: FloorData
+  m_Script: {fileID: 11500000, guid: 869508baa895c63489d9e9347a1bdf9e, type: 3}
+  m_Name: ParallaxData
   m_EditorClassIdentifier: 
-  floorSpeed: 8
+  currentL1Speed: 0.001
+  initialL1Speed: 0.001
+  currentL3Speed: 0.008
+  initialL3Speed: 0.008
+  currentFloorSpeed: 0.01
+  initialFloorSpeed: 0.01

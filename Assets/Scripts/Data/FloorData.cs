@@ -4,5 +4,6 @@ using UnityEngine;
 
 public class FloorData : ScriptableObject
 {
-    public float floorSpeed;
+    public float currentFloorSpeed;
+    public float initialFloorSpeed;
 }

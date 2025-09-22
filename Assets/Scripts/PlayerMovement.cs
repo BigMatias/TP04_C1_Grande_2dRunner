@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Experimental.GlobalIllumination;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -9,12 +8,25 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private PlayerData PlayerData;
     [SerializeField] private UIGame UIGame;
     [SerializeField] private AudioClip dead;
+    [SerializeField] private AudioClip coinPickedUp;
 
     [NonSerialized] public bool potionPickedUp = false;
     private Rigidbody2D rb;
     private Animator animator;
+    private static readonly int State = Animator.StringToHash("State");
     private AudioSource audioSource;
     private bool grounded = false;
+
+    enum PlayerState
+    {
+        Idle = 0,
+        Run = 1,
+        Die = 2,
+        Fall = 3,
+        Jump = 4
+    }
+
+    [SerializeField] private PlayerState playerState = PlayerState.Idle;
 
     private void Awake()
     {
@@ -24,18 +36,26 @@ public class PlayerMovement : MonoBehaviour
     }
     private void Start()
     {
+        animator.SetInteger(State, (int)playerState);
         rb.gravityScale = 5f;
     }
     private void Update()
     {
-        Fall();
+        if (UIGame.gameStarted)
+        {
+            Fall();
+        }
     }
 
     private void FixedUpdate()
     {
-        if (UIGame.gameStarted == true)
+        if (UIGame.gameStarted)
         {
-            animator.SetBool("GameStarted", true);
+            if (grounded)
+            {
+                playerState = PlayerState.Run;
+                animator.SetInteger(State, (int)playerState);
+            }
             Jump();
         }
     }
@@ -46,18 +66,20 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.gravityScale = 8f;
         }
-        if (rb.velocity.y <= 0f)
+        if (rb.velocity.y <= 0f && !grounded)
         {
-            animator.SetBool("Jump", false);
+            playerState = PlayerState.Fall;
+            animator.SetInteger(State, (int)playerState);
         }
     }
 
     private void Jump()
     {
-        if (Input.GetKey(PlayerData.Jump) && grounded == true && UIGame.gameStarted == true)
+        if (Input.GetKey(PlayerData.Jump) && grounded && UIGame.gameStarted)
         {
             rb.gravityScale = 5f;
-            animator.SetBool("Jump", true);
+            playerState = PlayerState.Jump;
+            animator.SetInteger(State, (int)playerState);
             rb.AddForce(PlayerData.JumpSpeed * Time.fixedDeltaTime * Vector2.up);
         }
     }
@@ -67,7 +89,7 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.layer == 7)
         {
             grounded = true;
-            animator.SetBool("Grounded", true);
+            animator.SetInteger(State, (int)playerState);
         }
     }
 
@@ -75,7 +97,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.layer == 8 && !potionPickedUp)
         {
-            animator.SetBool("TouchedEnemy", true);
+            playerState = PlayerState.Die;
+            animator.SetInteger(State, (int)playerState);
             rb.gravityScale = 0f;
             UIGame.gameStarted = false;
             audioSource.PlayOneShot(dead);
@@ -97,6 +120,12 @@ public class PlayerMovement : MonoBehaviour
         {
             StartCoroutine(PotionPickedUp());
         }
+        if (collision.gameObject.layer == 11)
+        {
+            CoinPickedUp();
+            audioSource.PlayOneShot(coinPickedUp);
+            collision.gameObject.SetActive(false);
+        }
     }
 
     private IEnumerator PotionPickedUp()
@@ -107,14 +136,16 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
+    private void CoinPickedUp()
+    {
+        UIGame.CoinPickedUp();
+    }
+
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.gameObject.layer == 7)
         {
             grounded = false;
-            animator.SetBool("Grounded", false);
         }
     }
-
-
 }

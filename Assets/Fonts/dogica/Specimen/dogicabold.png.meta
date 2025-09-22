@@ -169,7 +169,8 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      dogicabold_0: -4441426235328916563
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

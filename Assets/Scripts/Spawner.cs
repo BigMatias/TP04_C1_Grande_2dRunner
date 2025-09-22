@@ -1,17 +1,18 @@
 using System.Collections;
 using UnityEngine;
 
-public class Obstacles : MonoBehaviour
+public class Spawner : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] UIGame UIGame;
     [Header("Obstacles")]
-    [SerializeField] ObstacleData obstacleData;
+    [SerializeField] SpawnerData obstacleData;
     [SerializeField] GameObject saw;
     [SerializeField] GameObject spike;
     [SerializeField] GameObject bat;
     [SerializeField] GameObject platform;
     [SerializeField] GameObject potion;
+    [SerializeField] GameObject coin;
 
     private GameObject[] bats;
     private GameObject[] saws;
@@ -21,24 +22,36 @@ public class Obstacles : MonoBehaviour
     private Rigidbody2D spikeRb;
     private Rigidbody2D platformRb;
     private Rigidbody2D potionRb;
+    private Rigidbody2D coinRb;
 
     private float xLeftLimit = -11f;
+    private float obstacleMinRandomSpawn = 2f;
+    private float obstacleMaxRandomSpawn = 4f;
+    private float obstacleCurrentRandomSpawn = 0f;
+    private float obstacleTimeSpawn = 0f;
+
+    private float coinMinRandomSpawn = 2f;
+    private float coinMaxRandomSpawn = 5f;
+    private float coinCurrentRandomSpawn = 0f;
+    private float coinTimeSpawn = 0f;
 
     private void Awake()
     {
-        obstacleData.obstacleSpeed = 8;
+        obstacleData.spawnerSpeed = 8;
 
         batRb = bat.GetComponent<Rigidbody2D>();
         sawRb = saw.GetComponent<Rigidbody2D>();
         spikeRb = spike.GetComponent<Rigidbody2D>();
         platformRb = platform.GetComponent<Rigidbody2D>();
         potionRb = potion.GetComponent<Rigidbody2D>();
+        coinRb = coin.GetComponent<Rigidbody2D>();
 
         saw.gameObject.SetActive(false);
         spike.gameObject.SetActive(false);
         bat.gameObject.SetActive(false);
         platform.gameObject.SetActive(false);
         potion.gameObject.SetActive(false);
+        coin.gameObject.SetActive(false);
 
         bats = new GameObject[5];
         saws = new GameObject[5];
@@ -46,20 +59,32 @@ public class Obstacles : MonoBehaviour
 
         CreateExtraObstacles();
     }
-    void Start()
-    {
-        InvokeRepeating("CreateObstacle", Random.Range(1, 5), Random.Range(1, 5));
-        InvokeRepeating("CreateObstacle", Random.Range(1, 5), Random.Range(1, 5));
-        InvokeRepeating("CreateObstacle", Random.Range(1, 5), Random.Range(1, 5));
-        InvokeRepeating("CreatePlatformAndPotion", 15, Random.Range(20f, 35f));
-    }
+ 
 
     private void FixedUpdate()
     {
-        MoveObstacles();
+        MoveSpawnedObjects();
     }
 
-    private void MoveObstacles()
+    private void Update()
+    {
+        obstacleTimeSpawn += Time.deltaTime;   
+        if (obstacleTimeSpawn > obstacleCurrentRandomSpawn)
+        {
+            obstacleCurrentRandomSpawn = Random.Range(obstacleMinRandomSpawn, obstacleMaxRandomSpawn);
+            obstacleTimeSpawn = 0;
+            CreateObstacle();
+        }   
+        coinTimeSpawn += Time.deltaTime;   
+        if (coinTimeSpawn > coinCurrentRandomSpawn)
+        {
+            coinCurrentRandomSpawn = Random.Range(coinMinRandomSpawn, coinMaxRandomSpawn);
+            coinTimeSpawn = 0;
+            CreateCoin();
+        }
+    }
+
+    private void MoveSpawnedObjects()
     {
         for (int i = 0; i <= bats.Length - 1; i++)
         {
@@ -67,7 +92,7 @@ public class Obstacles : MonoBehaviour
             {
                 GameObject bat = bats[i];
                 Rigidbody2D rb = bat.GetComponent<Rigidbody2D>();
-                Vector2 newPosition = rb.position + Vector2.left * obstacleData.obstacleSpeed * Time.fixedDeltaTime;
+                Vector2 newPosition = rb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
                 rb.MovePosition(newPosition);
 
                 if (bat.transform.position.x <= xLeftLimit)
@@ -82,7 +107,7 @@ public class Obstacles : MonoBehaviour
             {
                 GameObject saw = saws[i];
                 Rigidbody2D rb = saw.GetComponent<Rigidbody2D>();
-                Vector2 newPosition = rb.position + Vector2.left * obstacleData.obstacleSpeed * Time.fixedDeltaTime;
+                Vector2 newPosition = rb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
                 rb.MovePosition(newPosition);
 
                 if (saw.transform.position.x <= xLeftLimit)
@@ -97,7 +122,7 @@ public class Obstacles : MonoBehaviour
             {
                 GameObject spike = spikes[i];
                 Rigidbody2D rb = spike.GetComponent<Rigidbody2D>();
-                Vector2 newPosition = rb.position + Vector2.left * obstacleData.obstacleSpeed * Time.fixedDeltaTime;
+                Vector2 newPosition = rb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
                 rb.MovePosition(newPosition);
 
                 if (spike.transform.position.x <= xLeftLimit)
@@ -107,10 +132,10 @@ public class Obstacles : MonoBehaviour
             }
         }
 
-        if (platform.activeSelf)
+        if (platform.activeSelf || potion.activeSelf)
         {
-            Vector2 newPositionPlat = platformRb.position + Vector2.left * obstacleData.obstacleSpeed * Time.fixedDeltaTime;
-            Vector2 newPositionPot = potionRb.position + Vector2.left * obstacleData.obstacleSpeed * Time.fixedDeltaTime;
+            Vector2 newPositionPlat = platformRb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
+            Vector2 newPositionPot = potionRb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
 
             platformRb.MovePosition(newPositionPlat);
             potionRb.MovePosition(newPositionPot);
@@ -125,6 +150,18 @@ public class Obstacles : MonoBehaviour
             }
 
         }
+
+        if (coin.activeSelf)
+        {
+            Vector2 newPosition = coinRb.position + Vector2.left * obstacleData.spawnerSpeed * Time.fixedDeltaTime;
+
+            coinRb.MovePosition(newPosition);
+
+            if (coin.transform.position.x <= xLeftLimit)
+            {
+                coin.gameObject.SetActive(false);
+            }
+        }
     }
 
     private void CreateExtraObstacles()
@@ -135,19 +172,19 @@ public class Obstacles : MonoBehaviour
 
         for (int i = 1; i <= bats.Length - 1; i++)
         {
-            GameObject newGameObject = Instantiate(bat);
+            GameObject newGameObject = Instantiate(bat, transform);
             newGameObject.name = "bat" + i;
             bats[i] = newGameObject;
         }
         for (int i = 1; i <= saws.Length - 1; i++)
         {
-            GameObject newGameObject = Instantiate(saw);
+            GameObject newGameObject = Instantiate(saw, transform);
             newGameObject.name = "saw" + i;
             saws[i] = newGameObject;
         }
         for (int i = 1; i <= spikes.Length - 1; i++)
         {
-            GameObject newGameObject = Instantiate(spike);
+            GameObject newGameObject = Instantiate(spike, transform);
             newGameObject.name = "spike" + i;
             spikes[i] = newGameObject;
         }
@@ -163,7 +200,7 @@ public class Obstacles : MonoBehaviour
                 if (saw.activeSelf == false)
                 {
                     saw.gameObject.SetActive(true);
-                    saw.transform.position = new Vector3(13.17f, -4.04f, 0);
+                    saw.transform.position = new Vector3(13.17f, -3.28f, 0);
 
                 }
                 else
@@ -176,7 +213,7 @@ public class Obstacles : MonoBehaviour
                 if (spike.activeSelf == false)
                 {
                     spike.gameObject.SetActive(true);
-                    spike.transform.position = new Vector3(13.17f, -3.2f, 0);
+                    spike.transform.position = new Vector3(13.17f, -2.77f, 0);
                 }
                 else
                 {
@@ -187,19 +224,15 @@ public class Obstacles : MonoBehaviour
             {
                 if (bat.activeSelf == false)
                 {
-                    float random = Random.Range(0f, 3f);
+                    float random = Random.Range(0f, 2f);
                     float ySpawnPos;
                     if (random >= 0 || random <= 0.9)
                     {
-                        ySpawnPos = -1.91f;
-                    }
-                    else if (random >= 1 || random <= 1.9)
-                    {
-                        ySpawnPos = -3.03f;
+                        ySpawnPos = -1.78f;
                     }
                     else
                     {
-                        ySpawnPos = 1.36f;
+                        ySpawnPos = 1.74f;
                     }
                     bat.gameObject.SetActive(true);
                     bat.transform.position = new Vector3(13.17f, ySpawnPos, 0);
@@ -224,16 +257,33 @@ public class Obstacles : MonoBehaviour
             }
         }
     }
-
-    private void CreatePlatformAndPotion()
+    private void CreateCoin()
     {
-        if (UIGame.gameStarted)
+        if (coin.activeSelf == false && UIGame.gameStarted)
         {
-            float spawnLocPlatX = 13.16f;
-            float spawnLocPlatY = -1.57f;
+            float randomPosY = Random.Range(-2.85f, 0.52f);
+            coin.gameObject.SetActive(true);
+            coin.transform.position = new Vector3(13.13f, randomPosY, 0);
 
-            float spawnLocPotX = Random.Range(13.15f, 18.06f);
-            float spawnLocPotY = Random.Range(2.33f, -0.3f);
+        }
+    }
+
+    public void  CreatePlatformAndPotionPub()
+    {
+        StartCoroutine(CreatePlatformAndPotion());
+    }
+
+    private IEnumerator CreatePlatformAndPotion()
+    {
+        while (true) 
+        {
+            float randomTime = Random.Range(15f, 25f);
+            yield return new WaitForSeconds(randomTime);
+            float spawnLocPlatX = 13.16f;
+            float spawnLocPlatY = -0.52f;
+
+            float spawnLocPotX = Random.Range(13.18f, 19.38f);
+            float spawnLocPotY = Random.Range(0.84f, 3.61f);
 
             platform.gameObject.SetActive(true);
             potion.gameObject.SetActive(true);
@@ -254,7 +304,7 @@ public class Obstacles : MonoBehaviour
         {
             yield return new WaitForSeconds(10);
 
-            obstacleData.obstacleSpeed += 1;
+            obstacleData.spawnerSpeed += 1;
         }
     }
 
